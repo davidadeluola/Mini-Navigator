@@ -1,0 +1,25 @@
+# Example environment variables for this Next.js app
+# Copy this file to `.env.local` (or your environment) and fill values.
+
+# App settings
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# NextAuth / auth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace_with_a_secure_random_value
+
+# Database (example PostgreSQL URL)
+DATABASE_URL=postgres://user:password@localhost:5432/dbname
+
+# Convex (replace with your Convex deployment values if used)
+CONVEX_URL=https://your-org.convex.cloud
+CONVEX_ADMIN_KEY=replace_with_convex_admin_key
+
+# OAuth / third-party credentials (placeholders)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Analytics / feature flags
+NEXT_PUBLIC_ANALYTICS_ID=your_analytics_id
+
+# Add other keys below as needed for local development.
