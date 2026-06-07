@@ -7,6 +7,13 @@ import { api } from "@/convex/_generated/api";
 import { redirect } from "next/navigation";
 import { fetchAuthMutation, getToken } from "@/lib/auth-server";
 
+/**
+ * Creates a blog post from validated input, requires an authenticated user, then refreshes cached data and redirects to the blog page.
+ *
+ * @param values - Input matching `createBlogSchema` containing `title` and `content` for the new post.
+ * @throws Error - If `values` fails schema validation; the error message contains validation details.
+ * @throws Error - If the request is unauthenticated ("Unauthorized").
+ */
 export async function createPostAction(
   values: z.infer<typeof createBlogSchema>
 ): Promise<void> {
