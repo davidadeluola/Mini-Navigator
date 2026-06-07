@@ -2,12 +2,13 @@ import React from "react";
 
 const CreateLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <>
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 py-8 px-4">
-        <h1 className="text-2xl font-bold"></h1>
+    <div className="min-h-screen flex flex-col items-center justify-center py-8 px-4">
+      <div className="w-full max-w-2xl">
+        {" "}
+        {/* ← wrap children in a width container */}
         {children}
       </div>
-    </>
+    </div>
   );
 };
 
