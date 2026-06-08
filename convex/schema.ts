@@ -5,6 +5,7 @@ export default defineSchema({
   posts: defineTable({
     title: v.string(),
     content: v.string(),
+    imageStorageUploadID: v.optional(v.id("_imageStorageUpload")),
     authorId: v.string(),
   }),
 });
