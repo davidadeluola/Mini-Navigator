@@ -9,11 +9,11 @@ import { api } from "@/convex/_generated/api";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+export const dynamic = "force-static"; // Ensure this page is always server-rendered to fetch fresh data
+export const revalidate = 60; // Disable ISR for this page to always serve fresh data on each request
+
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1780328766286-23e6cb082cb9?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw5fHx8ZW58MHx8fHx8";
-
-
-;
 
 const BlogPage = async () => {
   const postsData = await fetchQuery(api.posts.getPosts);
@@ -61,11 +61,12 @@ export async function BlogList() {
         {postsData.map((post) => (
           <Card
             key={post._id}
-            className="border border-border rounded-xl p-4 h-full flex flex-col hover:bg-accent transition-colors duration-200"
+            className="border border-border rounded-xl p-4 h-full flex flex-col hover:bg-accent transition-colors duration-200 "
+          
           >
             <div className="w-full aspect-video relative rounded-lg overflow-hidden mb-4">
               <Image
-                src={post.coverImage ?? FALLBACK_IMAGE}
+                src={post.imageId ?? FALLBACK_IMAGE}
                 alt={post.title}
                 height={200}
                 width={400}
@@ -83,7 +84,7 @@ export async function BlogList() {
 
               <Link
                 href={`/blog/${post._id}`}
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-150 hover:bg-primary/90 hover:gap-3 w-fit"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-150 hover:bg-primary/90 hover:gap-3 w-fit cursor-pointer"
               >
                 Read post <ArrowRight size={14} />
               </Link>

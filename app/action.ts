@@ -1,3 +1,4 @@
+// Mark this module as a Next.js Server Action file — all exports run server-side only
 "use server";
 
 import { createBlogSchema } from "@/schemas/blog";
@@ -6,33 +7,94 @@ import { revalidatePath } from "next/cache";
 import { api } from "@/convex/_generated/api";
 import { redirect } from "next/navigation";
 import { fetchAuthMutation, getToken } from "@/lib/auth-server";
+import { Id } from "@/convex/_generated/dataModel";
 
 /**
- * Creates a blog post from validated input, requires an authenticated user, then refreshes cached data and redirects to the blog page.
+ * Server Action: createPostAction
  *
- * @param values - Input matching `createBlogSchema` containing `title` and `content` for the new post.
- * @throws Error - If `values` fails schema validation; the error message contains validation details.
- * @throws Error - If the request is unauthenticated ("Unauthorized").
+ * Validates the form data, optionally uploads an image to Convex storage,
+ * then creates a new blog post via a Convex mutation.
+ * Redirects to /blog on success.
  */
 export async function createPostAction(
   values: z.infer<typeof createBlogSchema>
 ): Promise<void> {
+  // Validate incoming form values against the schema on the server
+  // (client-side validation can be bypassed, so this is the source of truth)
   const result = createBlogSchema.safeParse(values);
   if (!result.success) {
     throw new Error(result.error.message);
   }
 
-  const { title, content } = result.data;
+  const { title, content, image } = result.data;
 
-  // Guard: ensure user is authenticated before mutating
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       stage: "validation",
+  //       status: "passed",
+  //       payload: {
+  //         title,
+  //         content,
+  //         image: image
+  //           ? {
+  //               type: image.type,
+  //               size_bytes: image.size,
+  //               size_kb: parseFloat((image.size / 1024).toFixed(2)),
+  //               name: image.name ?? null,
+  //             }
+  //           : null,
+  //       },
+  //     },
+  //     null,
+  //     2
+  //   )
+  // );
+
+  // Verify the user is authenticated before performing any mutations
   const token = await getToken();
   if (!token) {
     throw new Error("Unauthorized");
   }
 
-  // fetchAuthMutation picks up the token automatically — no need to pass it
-  await fetchAuthMutation(api.posts.createPost, { title, content });
+  // storageId is only set if the user attached an image
+  // Typed as Id<"_storage"> to satisfy Convex's branded nominal type
+  let storageId: Id<"_storage"> | undefined;
 
+  if (image) {
+    // Step 1: Request a one-time Convex upload URL
+    // generateUploadUrl takes no extra args — the auth context is handled internally
+    const uploadUrl = await fetchAuthMutation(api.posts.generateUploadUrl, {});
+
+    // Step 2: POST the raw file directly to the Convex storage URL
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      body: image,
+      headers: {
+        // Tell Convex what MIME type to store (e.g. "image/png", "image/jpeg")
+        "Content-Type": image.type,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload image");
+    }
+
+    // Step 3: Extract the storageId returned by Convex after a successful upload
+    // Cast to Id<"_storage"> — Convex returns a branded ID string
+    const json = await uploadResponse.json();
+    storageId = json.storageId as Id<"_storage">;
+  }
+
+  // Create the post in Convex — only include imageId if an image was uploaded
+  await fetchAuthMutation(api.posts.createPost, {
+    title,
+    content,
+    ...(storageId && { imageId: storageId }),
+  });
+
+  // Bust the cache for the home page so the new post appears immediately
   revalidatePath("/");
+  // Navigate the user to the blog listing page after creation
   redirect("/blog");
 }

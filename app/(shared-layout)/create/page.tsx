@@ -24,16 +24,15 @@ import { Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 // import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
+// import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import {z} from "zod/v3";
-// import { createPostAction } from "../action";
-import Axios from "axios";
+// import { useRouter } from "next/navigation";
+import { z } from "zod/v3";
+
 import { createPostAction } from "@/app/action";
 // import { Id } from "@/convex/betterAuth/_generated/dataModel";
 const Create = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [isPending, startTransition] = useTransition();
   // const mutation = useMutation(api.posts.createPost);
 
@@ -42,6 +41,7 @@ const Create = () => {
     defaultValues: {
       title: "",
       content: "",
+      image: undefined,
     },
   });
 
@@ -57,10 +57,13 @@ const Create = () => {
 
         await createPostAction(values);
 
-        await Axios.post("/api/create-blog", {
-          title: values.title,
-          content: values.content,
-        });
+        // uncomment to test API route without Convex and route handler via createPostAction http
+
+        // await Axios.post("/api/create-blog", {
+        //   title: values.title,
+        //   content: values.content,
+        //   image: values.image, // Handle file upload separately
+        // });
 
         toast.success("Blog created successfully");
         form.reset();
@@ -133,6 +136,32 @@ const Create = () => {
                       aria-invalid={fieldState.invalid}
                       className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring resize-y"
                       {...field}
+                    />
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="image"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="image">Image</FieldLabel>
+                    {/* ✅ Fix 6: h-10 → min-h-32 so textarea is actually usable */}
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      aria-invalid={fieldState.invalid}
+                      className="min-h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring"
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        field.onChange(file ?? null);
+                      }}
                     />
                     <FieldError errors={[fieldState.error]} />
                   </Field>
