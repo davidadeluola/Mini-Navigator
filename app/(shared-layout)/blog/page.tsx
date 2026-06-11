@@ -66,7 +66,7 @@ export async function BlogList() {
           >
             <div className="w-full aspect-video relative rounded-lg overflow-hidden mb-4">
               <Image
-                src={post.imageId ?? FALLBACK_IMAGE}
+                src={post.imageUrl ?? FALLBACK_IMAGE}
                 alt={post.title}
                 height={200}
                 width={400}

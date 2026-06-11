@@ -40,7 +40,7 @@ export const getPosts = query({
 
         return {
           ...post,
-          imageId: imageUrl, // ✅ return the URL for the frontend to use
+          imageUrl, // ✅ return the URL for the frontend to use
         };
       })
     );
@@ -55,5 +55,27 @@ export const generateUploadUrl = mutation({
       throw new ConvexError("Unauthorized");
     }
     return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getPostById = query({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, { postId }) => {
+    const post = await ctx.db.get(postId);
+    if (!post) {
+      throw new ConvexError("Post not found");
+    }
+
+    let imageUrl: string | null = null;
+
+    if (post.imageId) {
+      const url = await ctx.storage.getUrl(post.imageId);
+      imageUrl = url ?? null; // getUrl can return null if file doesn't exist
+    }
+
+    return {
+      ...post,
+      imageUrl,
+    };
   },
 });
