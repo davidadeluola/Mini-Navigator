@@ -2,15 +2,9 @@ import React from "react";
 
 const BlogLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <>
-      <div className=" flex flex-col items-center justify-center py-8 px-4">
-        <div className="w-full max-w-7xl">
-          {" "}
-          {/* ← wrap children in a width container */}
-          {children}
-        </div>
-      </div>
-    </>
+    <div className="min-h-screen bg-[#0a0a0b] text-[#e8e6e1]">
+      <div className="max-w-6xl mx-auto px-6 pt-24 pb-16">{children}</div>
+    </div>
   );
 };
 

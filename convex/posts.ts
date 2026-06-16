@@ -7,6 +7,7 @@ export const createPost = mutation({
   args: {
     title: v.string(),
     content: v.string(),
+    tag: v.optional(v.string()),
     imageId: v.optional(v.id("_storage")), // ✅ matches schema + correct type
   },
   handler: async (ctx, args) => {
@@ -18,8 +19,9 @@ export const createPost = mutation({
     const newPostId = await ctx.db.insert("posts", {
       title: args.title,
       content: args.content,
+      tag: args.tag,
       imageId: args.imageId, // ✅ matches schema field
-      authorId: "david adeluola",
+      authorId: user.userId ?? "anonymous",
     });
 
     return newPostId;
@@ -27,9 +29,18 @@ export const createPost = mutation({
 });
 
 export const getPosts = query({
-  args: {},
-  handler: async (ctx) => {
-    const posts = await ctx.db.query("posts").order("desc").collect();
+  args: {
+    authorId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let query = ctx.db.query("posts");
+    
+    // Filter by author if provided
+    if (args.authorId) {
+      query = query.filter((q) => q.eq(q.field("authorId"), args.authorId));
+    }
+    
+    const posts = await query.order("desc").collect();
 
     return Promise.all(
       posts.map(async (post) => {

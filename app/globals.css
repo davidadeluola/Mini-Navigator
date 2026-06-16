@@ -138,3 +138,120 @@ body {
     @apply font-sans;
   }
 }
+
+/* ── GSAP pre-animation states ── */
+.gsap-hero-text,
+.gsap-hero-sub,
+.gsap-hero-cta,
+.gsap-section {
+  visibility: hidden;
+}
+
+/* ── Gradient orb background ── */
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -50px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(40px, 30px) scale(1.05); }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: orbFloat 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.orb-violet {
+  background: radial-gradient(circle, oklch(0.55 0.25 285) 0%, transparent 70%);
+  width: 500px;
+  height: 500px;
+}
+
+.orb-blue {
+  background: radial-gradient(circle, oklch(0.55 0.2 250) 0%, transparent 70%);
+  width: 400px;
+  height: 400px;
+  animation-delay: -7s;
+}
+
+.orb-pink {
+  background: radial-gradient(circle, oklch(0.55 0.2 330) 0%, transparent 70%);
+  width: 350px;
+  height: 350px;
+  animation-delay: -14s;
+}
+
+/* ── Glassmorphism card ── */
+.glass-card {
+  background: oklch(0.2 0 0 / 40%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid oklch(1 0 0 / 8%);
+  border-radius: 1rem;
+}
+
+/* ── Animated gradient border ── */
+@keyframes gradientSpin {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 50%;
+  background: conic-gradient(from var(--angle), oklch(0.6 0.25 285), oklch(0.6 0.2 250), oklch(0.6 0.25 285));
+  animation: gradientSpin 3s linear infinite;
+  padding: 3px;
+}
+
+.gradient-border > * {
+  border-radius: 50%;
+}
+
+/* ── Dot grid pattern ── */
+.dot-grid {
+  background-image: radial-gradient(circle, oklch(1 0 0 / 6%) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Post card hover glow ── */
+.post-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px oklch(0.5 0.25 285 / 10%);
+  border-color: oklch(1 0 0 / 12%);
+}
+
+/* ── Timeline line ── */
+.timeline-line {
+  position: absolute;
+  left: 1.25rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, oklch(0.6 0.25 285 / 40%), transparent);
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: oklch(0.55 0.25 285);
+  border: 3px solid oklch(0.15 0 0);
+  z-index: 1;
+}

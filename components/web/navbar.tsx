@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/web/theme-toggle";
 import { useConvexAuth } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -15,6 +15,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/create", label: "Create" },
   { href: "/blog", label: "Blog" },
+  { href: "/learning", label: "Learning" },
 ];
 
 const Navbar = () => {

@@ -26,7 +26,7 @@ export async function createPostAction(
     throw new Error(result.error.message);
   }
 
-  const { title, content, image } = result.data;
+  const { title, content, image, tag } = result.data;
 
   // console.log(
   //   JSON.stringify(
@@ -90,6 +90,7 @@ export async function createPostAction(
   await fetchAuthMutation(api.posts.createPost, {
     title,
     content,
+    ...(tag && { tag }),
     ...(storageId && { imageId: storageId }),
   });
 
