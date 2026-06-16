@@ -149,10 +149,23 @@ body {
 
 /* ── Gradient orb background ── */
 @keyframes orbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -50px) scale(1.1); }
-  50% { transform: translate(-20px, 20px) scale(0.95); }
-  75% { transform: translate(40px, 30px) scale(1.05); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+
+  75% {
+    transform: translate(40px, 30px) scale(1.05);
+  }
 }
 
 .orb {
@@ -195,8 +208,13 @@ body {
 
 /* ── Animated gradient border ── */
 @keyframes gradientSpin {
-  0% { --angle: 0deg; }
-  100% { --angle: 360deg; }
+  0% {
+    --angle: 0deg;
+  }
+
+  100% {
+    --angle: 360deg;
+  }
 }
 
 @property --angle {
@@ -213,7 +231,7 @@ body {
   padding: 3px;
 }
 
-.gradient-border > * {
+.gradient-border>* {
   border-radius: 50%;
 }
 

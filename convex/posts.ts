@@ -9,6 +9,8 @@ export const createPost = mutation({
     content: v.string(),
     tag: v.optional(v.string()),
     imageId: v.optional(v.id("_storage")), // ✅ matches schema + correct type
+    imageCreditName: v.optional(v.string()),
+    imageCreditUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -21,6 +23,8 @@ export const createPost = mutation({
       content: args.content,
       tag: args.tag,
       imageId: args.imageId, // ✅ matches schema field
+      imageCreditName: args.imageCreditName,
+      imageCreditUrl: args.imageCreditUrl,
       authorId: user.userId ?? "anonymous",
     });
 

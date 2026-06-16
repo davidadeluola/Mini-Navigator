@@ -14,6 +14,8 @@ export const createBlogSchema = z.object({
   content: z.string().min(10).max(5000),
   tag: z.string().optional(),
   image: z.instanceof(File).optional(),
+  imageCreditName: z.string().optional(),
+  imageCreditUrl: z.string().optional(),
 });
 
 export type CreateBlogSchema = z.infer<typeof createBlogSchema>;

@@ -8,6 +8,8 @@ export default defineSchema({
     content: v.string(),
     tag: v.optional(v.string()),
     imageId: v.optional(v.id("_storage")), // ✅ correct system table
+    imageCreditName: v.optional(v.string()),
+    imageCreditUrl: v.optional(v.string()),
     authorId: v.string(),
   }),
 

@@ -5,32 +5,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { excerpt } from "@/lib/excerpt";
+import { excerpt, calculateReadTime } from "@/lib/excerpt";
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1780328766286-23e6cb082cb9?w=400&auto=format&fit=crop&q=60";
+import { FALLBACK_IMAGE, tagColors } from "@/lib/constants";
 
-const tagColors: Record<string, string> = {
-  Building: "border-violet-500/30 bg-violet-500/10 text-violet-400",
-  Tech: "border-sky-500/30 bg-sky-500/10 text-sky-400",
-  Craft: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-  Life: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  Design: "border-pink-500/30 bg-pink-500/10 text-pink-400",
-  Tutorial: "border-orange-500/30 bg-orange-500/10 text-orange-400",
-};
-
-import { authClient } from "@/lib/auth-client";
 
 export default function MiniNavigatorHome() {
-  const { data: session } = authClient.useSession();
-  
-  // If authenticated, get their posts. If not, don't run query (returns undefined).
-  const posts = useQuery(api.posts.getPosts, session?.user ? { authorId: session.user.id } : "skip");
+  const posts = useQuery(api.posts.getPosts, {});
+  const displayPosts = posts?.slice(0, 3);
+  const isLoading = posts === undefined;
+
   const heroRef = useRef<HTMLDivElement>(null);
   const postsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
@@ -157,37 +146,6 @@ export default function MiniNavigatorHome() {
     return () => ctx.revert();
   }, [posts]);
 
-  const dummyPosts = [
-    {
-      _id: "dummy_1",
-      title: "Building an Agentic Coding Assistant",
-      content: "A deep dive into how I built this AI coding assistant using Convex, Next.js, and better-auth. The architecture is surprisingly simple once you get the pieces right.",
-      tag: "Building",
-      _creationTime: Date.now() - 86400000 * 2, // 2 days ago
-      imageUrl: null,
-    },
-    {
-      _id: "dummy_2",
-      title: "Why Glassmorphism is Making a Comeback",
-      content: "Minimalism is great, but sometimes you just want things to look premium. Exploring dark mode glassmorphism with Tailwind CSS and GSAP.",
-      tag: "Design",
-      _creationTime: Date.now() - 86400000 * 5,
-      imageUrl: null,
-    },
-    {
-      _id: "dummy_3",
-      title: "Mastering Convex in 2026",
-      content: "Convex has changed how I build full-stack apps. No more fighting with Postgres migrations. Here is my standard boilerplate and setup.",
-      tag: "Tech",
-      _creationTime: Date.now() - 86400000 * 10,
-      imageUrl: null,
-    },
-  ];
-
-  // If unauthenticated, use dummy posts. If authenticated, use real posts (up to 3).
-  const displayPosts = session ? posts?.slice(0, 3) : dummyPosts;
-  const isLoading = session ? posts === undefined : false;
-
   return (
     <main
       ref={heroRef}
@@ -221,7 +179,7 @@ export default function MiniNavigatorHome() {
           </h1>
 
           {/* Subtitle */}
-          <p className="gsap-hero-sub text-lg md:text-xl text-white/45 leading-relaxed max-w-xl mb-10">
+          <p className="gsap-hero-sub text-lg md:text-xl text-white/45 font-mono leading-relaxed max-w-xl mb-10">
             Building things, figuring stuff out, and writing about it. Raw
             thoughts on code, craft, and whatever Lagos throws at me.
           </p>
@@ -297,7 +255,7 @@ export default function MiniNavigatorHome() {
             {displayPosts.map((post) => (
               <Link
                 key={post._id}
-                href={session ? `/blog/${post._id}` : "#"}
+                href={`/blog/${post._id}`}
                 className="post-card-anim"
               >
                 <article className="post-card glass-card overflow-hidden h-full flex flex-col">
@@ -316,17 +274,22 @@ export default function MiniNavigatorHome() {
 
                   {/* Content */}
                   <div className="p-5 flex flex-col flex-1">
-                    {/* Tag */}
-                    {post.tag && (
-                      <span
-                        className={`inline-flex w-fit text-[10px] font-medium px-2.5 py-0.5 rounded-full border mb-3 ${
-                          tagColors[post.tag] ??
-                          "border-white/15 bg-white/5 text-white/50"
-                        }`}
-                      >
-                        {post.tag}
+                    {/* Tags */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {post.tag && (
+                        <span
+                          className={`inline-flex text-[10px] font-medium px-2.5 py-0.5 rounded-full border ${
+                            tagColors[post.tag] ??
+                            "border-white/15 bg-white/5 text-white/50"
+                          }`}
+                        >
+                          {post.tag}
+                        </span>
+                      )}
+                      <span className="inline-flex text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/40">
+                        {calculateReadTime(post.content)} min read
                       </span>
-                    )}
+                    </div>
                     <h3 className="text-base font-semibold text-white/90 leading-snug mb-2 line-clamp-2">
                       {post.title}
                     </h3>
@@ -393,7 +356,7 @@ export default function MiniNavigatorHome() {
               David Adeluola
             </h3>
             <p className="text-sm text-white/40 leading-relaxed max-w-lg">
-              Computer engineering student, product engineer, and builder of
+              Computer engineering student, product engineer, AI enthusiast, and builder of
               things nobody asked for. Somewhere in Lagos, figuring it out.
             </p>
           </div>
@@ -403,7 +366,14 @@ export default function MiniNavigatorHome() {
       {/* ═══ FOOTER ═══ */}
       <footer className="border-t border-white/5 px-6 py-8 max-w-4xl mx-auto flex items-center justify-between">
         <span className="text-xs text-white/20">© 2026 MiniNavigator</span>
-        <span className="text-xs text-white/15">Built by David</span>
+        <Link 
+          href="https://adeluola.vercel.app" 
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-white/15 hover:text-white/40 transition-colors"
+        >
+          Built by David
+        </Link>
       </footer>
     </main>
   );

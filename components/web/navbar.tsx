@@ -23,6 +23,11 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
+  const visibleLinks = navLinks.filter((link) => {
+    if (link.label === "Create" && !isAuthenticated) return false;
+    return true;
+  });
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 text-foreground backdrop-blur-xl">
@@ -39,7 +44,7 @@ const Navbar = () => {
 
           {/* Desktop nav */}
           <ul className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <li key={link.label}>
                 <Link
                   href={link.href}
@@ -147,7 +152,7 @@ const Navbar = () => {
 
         {/* Nav links */}
         <nav className="flex flex-col gap-1 px-4 py-6">
-          {navLinks.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}

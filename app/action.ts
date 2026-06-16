@@ -26,30 +26,7 @@ export async function createPostAction(
     throw new Error(result.error.message);
   }
 
-  const { title, content, image, tag } = result.data;
-
-  // console.log(
-  //   JSON.stringify(
-  //     {
-  //       stage: "validation",
-  //       status: "passed",
-  //       payload: {
-  //         title,
-  //         content,
-  //         image: image
-  //           ? {
-  //               type: image.type,
-  //               size_bytes: image.size,
-  //               size_kb: parseFloat((image.size / 1024).toFixed(2)),
-  //               name: image.name ?? null,
-  //             }
-  //           : null,
-  //       },
-  //     },
-  //     null,
-  //     2
-  //   )
-  // );
+  const { title, content, image, tag, imageCreditName, imageCreditUrl } = result.data;
 
   // Verify the user is authenticated before performing any mutations
   const token = await getToken();
@@ -92,6 +69,8 @@ export async function createPostAction(
     content,
     ...(tag && { tag }),
     ...(storageId && { imageId: storageId }),
+    ...(imageCreditName && { imageCreditName }),
+    ...(imageCreditUrl && { imageCreditUrl }),
   });
 
   // Bust the cache for the home page so the new post appears immediately

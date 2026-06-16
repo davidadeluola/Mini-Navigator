@@ -7,21 +7,31 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import CommentSection from "@/components/web/Comment";
 import { preloadQuery } from "convex/nextjs";
+import { calculateReadTime } from "@/lib/excerpt";
 
-const FALLBACK =
-  "https://images.unsplash.com/photo-1780328766286-23e6cb082cb9?w=800&auto=format&fit=crop&q=60";
-
-const tagColors: Record<string, string> = {
-  Building: "border-violet-500/30 bg-violet-500/10 text-violet-400",
-  Tech: "border-sky-500/30 bg-sky-500/10 text-sky-400",
-  Craft: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-  Life: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  Design: "border-pink-500/30 bg-pink-500/10 text-pink-400",
-  Tutorial: "border-orange-500/30 bg-orange-500/10 text-orange-400",
-};
-
+import { FALLBACK_IMAGE as FALLBACK, tagColors } from "@/lib/constants";
 interface PostIdProps {
   params: Promise<{ postId: Id<"posts"> }>;
+}
+
+import { Metadata } from "next";
+
+export async function generateMetadata({ params }: PostIdProps): Promise<Metadata> {
+  const { postId } = await params;
+  try {
+    const postData = await fetchQuery(api.posts.getPostById, { postId });
+    return {
+      title: postData.title,
+      description: postData.content.substring(0, 160) + "...",
+      openGraph: {
+        images: [postData.imageUrl || FALLBACK],
+      },
+    };
+  } catch (error) {
+    return {
+      title: "Post Not Found",
+    };
+  }
 }
 
 const PostId = async ({ params }: PostIdProps) => {
@@ -64,7 +74,7 @@ const PostId = async ({ params }: PostIdProps) => {
       </div>
 
       {/* Hero image */}
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden glass-card">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden glass-card group/image">
         <Image
           src={
             postData.imageUrl && postData.imageUrl.length > 0
@@ -77,13 +87,34 @@ const PostId = async ({ params }: PostIdProps) => {
           priority
         />
         {/* Bottom gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b]/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b]/80 via-transparent to-transparent pointer-events-none" />
+
+        {/* Image Credit Overlay */}
+        {(postData.imageCreditName || postData.imageCreditUrl) && (
+          <div className="absolute bottom-4 right-4 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 z-10">
+            <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-md px-3 py-1.5 text-xs text-white/70 shadow-xl flex items-center gap-1.5">
+              <span className="text-white/40">Photo by</span>
+              {postData.imageCreditUrl ? (
+                <a 
+                  href={postData.imageCreditUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-violet-400 hover:text-violet-300 transition-colors font-medium hover:underline"
+                >
+                  {postData.imageCreditName || "Original"}
+                </a>
+              ) : (
+                <span className="font-medium text-white/90">{postData.imageCreditName}</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Meta */}
       <div className="mt-10 space-y-4">
         {/* Tag */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-3">
           {postData.tag && (
             <span
               className={`inline-flex text-[11px] font-medium px-3 py-1 rounded-full border ${
@@ -94,7 +125,10 @@ const PostId = async ({ params }: PostIdProps) => {
               {postData.tag}
             </span>
           )}
-          <span className="text-xs text-white/25 flex items-center gap-1.5">
+          <span className="inline-flex text-[11px] font-medium px-3 py-1 rounded-full border border-white/10 bg-white/5 text-white/40">
+            {calculateReadTime(postData.content)} min read
+          </span>
+          <span className="text-xs text-white/25 flex items-center gap-1.5 ml-auto">
             <Clock className="w-3.5 h-3.5" />
             {new Date(postData._creationTime).toLocaleDateString(undefined, {
               year: "numeric",

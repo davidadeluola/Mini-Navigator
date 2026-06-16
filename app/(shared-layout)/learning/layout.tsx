@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Create Post",
-  description: "Write and publish a new blog post.",
+  title: "Learning Log",
+  description: "A log of my daily learnings and technical explorations.",
 };
 
-export default function CreateLayout({
+export default function LearningLayout({
   children,
 }: {
   children: React.ReactNode;

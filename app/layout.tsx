@@ -25,9 +25,50 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Learning Next.js",
+  title: {
+    default: "David Adeluola | MiniNavigator",
+    template: "%s | MiniNavigator",
+  },
   description:
-    "A simple Next.js app to learn the basics of Next.js and how to use it to build a simple web application.",
+    "Personal blog and digital garden of David Adeluola — Computer engineering student, product engineer, and AI enthusiast building things nobody asked for in Lagos.",
+  keywords: [
+    "David Adeluola",
+    "Product Engineer",
+    "AI Enthusiast",
+    "Computer Engineering",
+    "Next.js",
+    "Convex",
+    "Lagos",
+    "Software Development",
+    "Tech Blog",
+  ],
+  authors: [{ name: "David Adeluola", url: "https://adeluola.vercel.app" }],
+  creator: "David Adeluola",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://adeluola.vercel.app",
+    title: "David Adeluola | MiniNavigator",
+    description:
+      "Personal blog and digital garden of David Adeluola — Computer engineering student, product engineer, and AI enthusiast building things nobody asked for.",
+    siteName: "MiniNavigator",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1780328766286-23e6cb082cb9?w=1200&h=630&auto=format&fit=crop&q=80", // Standard OG image size
+        width: 1200,
+        height: 630,
+        alt: "MiniNavigator Default Open Graph Image",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "David Adeluola | MiniNavigator",
+    description:
+      "Personal blog and digital garden of David Adeluola.",
+    creator: "@davidadeluola", // Feel free to change this!
+    images: ["https://images.unsplash.com/photo-1780328766286-23e6cb082cb9?w=1200&h=630&auto=format&fit=crop&q=80"],
+  },
 };
 
 export default async function RootLayout({
