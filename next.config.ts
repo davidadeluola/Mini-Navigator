@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+
 const allowedHostnames = [
   "images.unsplash.com",
   "tremendous-crane-40.convex.cloud",
@@ -9,6 +10,7 @@ const allowedHostnames = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
+  cacheComponents: true,
    experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

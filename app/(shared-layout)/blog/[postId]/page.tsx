@@ -8,18 +8,36 @@ import { Id } from "@/convex/_generated/dataModel";
 import CommentSection from "@/components/web/Comment";
 import { preloadQuery } from "convex/nextjs";
 import { calculateReadTime } from "@/lib/excerpt";
+import PostPresence from "@/components/web/PostPresence";
 
 import { FALLBACK_IMAGE as FALLBACK, tagColors } from "@/lib/constants";
+
 interface PostIdProps {
   params: Promise<{ postId: Id<"posts"> }>;
 }
 
 import { Metadata } from "next";
+import { getToken } from "@/lib/auth-server";
+import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
-export async function generateMetadata({ params }: PostIdProps): Promise<Metadata> {
+// Cached post fetch: stored for 10 min, revalidated on demand via tag "posts"
+const getCachedPost = cache((postId: Id<"posts">) =>
+  unstable_cache(
+    () => fetchQuery(api.posts.getPostById, { postId }),
+    ["post", postId],
+    { revalidate: 600, tags: ["posts", `post-${postId}`] }
+  )()
+);
+
+export async function generateMetadata({
+  params,
+}: PostIdProps): Promise<Metadata> {
   const { postId } = await params;
+
   try {
-    const postData = await fetchQuery(api.posts.getPostById, { postId });
+    const postData = await getCachedPost(postId);
     return {
       title: postData.title,
       description: postData.content.substring(0, 160) + "...",
@@ -27,24 +45,33 @@ export async function generateMetadata({ params }: PostIdProps): Promise<Metadat
         images: [postData.imageUrl || FALLBACK],
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
-      title: "Post Not Found",
+      title: `Post Not Found due to ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
     };
   }
 }
 
 const PostId = async ({ params }: PostIdProps) => {
   const { postId } = await params;
+  const token: string | undefined = await getToken();
+
+  if (!token) {
+    redirect("/auth/login");
+  }
 
   const [postData, preloadedComments] = await Promise.all([
-    fetchQuery(api.posts.getPostById, { postId }),
-    preloadQuery(api.comments.getCommentsByPostId, { postId }),
+    getCachedPost(postId),                                          // ← cached 10 min
+    preloadQuery(api.comments.getCommentsByPostId, { postId }),     // ← real-time (Convex)
   ]);
 
+
   if (!postData) {
+    
     return (
-      <div className="max-w-3xl mx-auto px-6 py-32 text-center space-y-4">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-32 text-center space-y-4">
         <p className="text-white/40 text-lg">Post not found.</p>
         <Link
           href="/blog"
@@ -61,7 +88,7 @@ const PostId = async ({ params }: PostIdProps) => {
   }
 
   return (
-    <article className="max-w-3xl mx-auto">
+    <article className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
       {/* Back button */}
       <div className="mb-8">
         <Link
@@ -89,22 +116,24 @@ const PostId = async ({ params }: PostIdProps) => {
         {/* Bottom gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b]/80 via-transparent to-transparent pointer-events-none" />
 
-        {/* Image Credit Overlay */}
+        {/* Image Credit Overlay — always visible on touch, hover-only on desktop */}
         {(postData.imageCreditName || postData.imageCreditUrl) && (
-          <div className="absolute bottom-4 right-4 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 z-10">
+          <div className="absolute bottom-4 right-4 opacity-100 sm:opacity-0 sm:group-hover/image:opacity-100 transition-opacity duration-300 z-10">
             <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-md px-3 py-1.5 text-xs text-white/70 shadow-xl flex items-center gap-1.5">
               <span className="text-white/40">Photo by</span>
               {postData.imageCreditUrl ? (
-                <a 
-                  href={postData.imageCreditUrl} 
-                  target="_blank" 
+                <a
+                  href={postData.imageCreditUrl}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-violet-400 hover:text-violet-300 transition-colors font-medium hover:underline"
                 >
                   {postData.imageCreditName || "Original"}
                 </a>
               ) : (
-                <span className="font-medium text-white/90">{postData.imageCreditName}</span>
+                <span className="font-medium text-white/90">
+                  {postData.imageCreditName}
+                </span>
               )}
             </div>
           </div>
@@ -112,9 +141,9 @@ const PostId = async ({ params }: PostIdProps) => {
       </div>
 
       {/* Meta */}
-      <div className="mt-10 space-y-4">
-        {/* Tag */}
-        <div className="flex items-center flex-wrap gap-3">
+      <div className="mt-10 space-y-3">
+        {/* Tags + read time */}
+        <div className="flex items-center flex-wrap gap-2">
           {postData.tag && (
             <span
               className={`inline-flex text-[11px] font-medium px-3 py-1 rounded-full border ${
@@ -128,20 +157,34 @@ const PostId = async ({ params }: PostIdProps) => {
           <span className="inline-flex text-[11px] font-medium px-3 py-1 rounded-full border border-white/10 bg-white/5 text-white/40">
             {calculateReadTime(postData.content)} min read
           </span>
-          <span className="text-xs text-white/25 flex items-center gap-1.5 ml-auto">
+        </div>
+
+        {/* Title */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-snug">
+          {postData.title}
+        </h1>
+
+        {/* Author + date + presence */}
+        <div className="flex items-center flex-wrap gap-3">
+          <p className="text-sm text-white/30">By {postData.authorId}</p>
+          <span className="h-3.5 w-px bg-white/10 hidden sm:block" />
+          <span className="text-xs text-white/25 flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
-            {new Date(postData._creationTime).toLocaleDateString(undefined, {
+            {new Date(postData._creationTime).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
             })}
           </span>
+          <div className="flex items-center sm:ml-auto">
+            <PostPresence roomId={postData._id} userId={postData.authorId} />
+            {/* {userId && (
+              <span className="ml-2 text-sm text-white/30">
+                {userId === postData.authorId ? "You" : "Someone"}
+              </span>
+            )} */}
+          </div>
         </div>
-
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
-          {postData.title}
-        </h1>
-        <p className="text-sm text-white/30">By {postData.authorId}</p>
       </div>
 
       {/* Divider */}
@@ -153,20 +196,20 @@ const PostId = async ({ params }: PostIdProps) => {
 
       {/* Content */}
       <div className="prose-dark">
-        <p className="text-base text-white/70 font-mono leading-8 whitespace-pre-wrap">
+        <p className="text-sm sm:text-base text-white/70 font-mono leading-7 sm:leading-8 whitespace-pre-wrap">
           {postData.content}
         </p>
       </div>
 
       {/* Divider */}
       <div className="my-10 flex items-center gap-4">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/10 to-transparent" />
         <span className="w-1.5 h-1.5 rounded-full bg-violet-500/50" />
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* Comments */}
-      <div className="mt-4">
+      <div className="mt-6 pb-10">
         <CommentSection preloadedComments={preloadedComments} />
       </div>
     </article>

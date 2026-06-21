@@ -139,7 +139,7 @@ const CommentSection = (props: {
                   </span>
                   <span className="text-[11px] text-white/25">
                     {new Date(comment._creationTime).toLocaleDateString(
-                      undefined,
+                      "en-US",
                       {
                         year: "numeric",
                         month: "short",

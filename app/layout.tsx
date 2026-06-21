@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { ConvexClientProvider } from "@/components/web/ConvexClientProvider";
 import { getToken } from "@/lib/auth-server";
 import { Toaster } from "@/components/ui/sonner";
+import { connection } from "next/server";
+import { Suspense } from "react";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -71,12 +73,24 @@ export const metadata: Metadata = {
   },
 };
 
+// Isolated async component so only this subtree is dynamic (per-request),
+// while the static layout shell above can be cached by cacheComponents.
+async function ConvexAuthProvider({ children }: { children: React.ReactNode }) {
+  await connection(); // signals: this subtree needs a live request
+  const rawToken = await getToken();
+  const token: string | null = typeof rawToken === "string" ? rawToken : null;
+  return (
+    <ConvexClientProvider initialToken={token}>
+      {children}
+    </ConvexClientProvider>
+  );
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const token = await getToken();
   return (
     <html
       lang="en"
@@ -99,10 +113,11 @@ export default async function RootLayout({
           enableColorScheme={false}
           disableTransitionOnChange
         >
-          <ConvexClientProvider initialToken={token}>
-            {children}
-       
-          </ConvexClientProvider>
+          <Suspense>
+            <ConvexAuthProvider>
+              {children}
+            </ConvexAuthProvider>
+          </Suspense>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
