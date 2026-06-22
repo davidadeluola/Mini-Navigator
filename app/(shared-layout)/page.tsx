@@ -350,7 +350,7 @@ export default function MiniNavigatorHome() {
 
           <div>
             <p className="text-xs tracking-[0.25em] uppercase text-white/25 mb-2">
-              Written by
+              Created by
             </p>
             <h3 className="text-xl text-white font-semibold mb-3">
               David Adeluola
