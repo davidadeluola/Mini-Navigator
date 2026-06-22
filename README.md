@@ -49,6 +49,25 @@ CONVEX_DEPLOYMENT="your-convex-deployment-name"
 ```
 *(Note: If you run `npx convex dev`, the `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL` variables will usually be automatically configured for you).*
 
+## 📖 Documentation & Guides
+
+### Vercel Analytics
+Vercel Analytics is integrated directly into the project to measure traffic, page views, and user behavior without compromising privacy.
+
+**Installation & Usage Process:**
+1. **Install Package**: We installed the official package via `npm install @vercel/analytics`.
+2. **Inject Component**: The `<Analytics />` component is imported from `@vercel/analytics/react` and placed directly into the root `app/layout.tsx` file right before the closing `</body>` tag.
+3. **Automatic Tracking**: Next.js and Vercel automatically handle the rest. Every time a user visits a page, the metrics will securely stream into your Vercel Dashboard under the "Analytics" tab.
+
+### BetterAuth Authentication
+We utilize **BetterAuth** tightly coupled with **Convex** to handle sessions seamlessly.
+
+**Installation & Usage Process:**
+1. **Setup**: The core logic is installed via the `@convex-dev/better-auth` integration.
+2. **Configuration**: Configured inside `convex/auth.config.ts` and `lib/auth-server.ts`. This connects the BetterAuth providers directly to Convex's real-time identity system.
+3. **Usage (Client-Side)**: We use the `useConvexAuth()` hook in our React components (like the Navbar) to determine if a user is `isAuthenticated` or `isLoading`.
+4. **Usage (Server-Side/Mutations)**: Within our backend functions (e.g. `convex/posts.ts`), we invoke `authComponent.safeGetAuthUser(ctx)` to securely extract the user's ID and ensure they have authorization before modifying the database.
+
 ## 🛠️ Getting Started
 
 First, run the development server:

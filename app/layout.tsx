@@ -86,6 +86,8 @@ async function ConvexAuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { Analytics } from "@vercel/analytics/react";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -120,6 +122,7 @@ export default async function RootLayout({
           </Suspense>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
