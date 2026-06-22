@@ -70,7 +70,7 @@ const PostId = async ({ params }: PostIdProps) => {
 
   if (!postData) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-32 text-center space-y-4">
+      <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-32 text-center space-y-4">
         <p className="text-white/40 text-lg">Post not found.</p>
         <Link
           href="/blog"
