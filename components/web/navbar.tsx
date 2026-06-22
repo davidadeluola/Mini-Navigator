@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/web/theme-toggle";
 import { useConvexAuth } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -10,11 +10,13 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import SearchInput from "@/components/web/SearchInput";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/create", label: "Create" },
   { href: "/blog", label: "Blog" },
+  { href: "/learning", label: "Learning" },
 ];
 
 const Navbar = () => {
@@ -22,10 +24,15 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
+  const visibleLinks = navLinks.filter((link) => {
+    if (link.label === "Create" && !isAuthenticated) return false;
+    return true;
+  });
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 text-foreground backdrop-blur-xl">
-        <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-2 sm:px-6">
+        <nav className="mx-auto flex h-16 w-full max-w-screen-2xl items-center justify-between px-2 sm:px-6">
           <Link
             href="/"
             className="text-sm font-semibold tracking-tight text-foreground"
@@ -38,7 +45,7 @@ const Navbar = () => {
 
           {/* Desktop nav */}
           <ul className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <li key={link.label}>
                 <Link
                   href={link.href}
@@ -50,7 +57,12 @@ const Navbar = () => {
             ))}
           </ul>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Desktop search */}
+            <div className="hidden md:flex w-56 lg:w-72">
+              <SearchInput className="w-full" />
+            </div>
+
             {/* Desktop auth buttons */}
             <div className="hidden md:flex items-center gap-3">
               {isLoading ? null : isAuthenticated ? (
@@ -144,9 +156,14 @@ const Navbar = () => {
           </button>
         </div>
 
+        {/* Mobile search - Above nav */}
+        <div className="px-4 pt-6 pb-2">
+          <SearchInput className="w-full" />
+        </div>
+
         {/* Nav links */}
-        <nav className="flex flex-col gap-1 px-4 py-6">
-          {navLinks.map((link) => (
+        <nav className="flex flex-col gap-1 px-4 pt-2 pb-3">
+          {visibleLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}

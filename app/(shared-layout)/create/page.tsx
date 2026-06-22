@@ -8,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
-import { createBlogSchema, type CreateBlogSchema } from "@/schemas/blog";
+import { createBlogSchema, POST_TAGS, type CreateBlogSchema } from "@/schemas/blog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller } from "react-hook-form";
 import {
@@ -20,51 +20,39 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, PenLine, Sparkles } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-
-// import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import {z} from "zod/v3";
-// import { createPostAction } from "../action";
-import Axios from "axios";
+import { z } from "zod/v3";
 import { createPostAction } from "@/app/action";
-// import { Id } from "@/convex/betterAuth/_generated/dataModel";
+import Link from "next/link";
+
+import { tagColors } from "@/lib/constants";
+import { Footer } from "@/components/web/footer";
+
 const Create = () => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  // const mutation = useMutation(api.posts.createPost);
 
   const form = useForm<CreateBlogSchema>({
     resolver: zodResolver(createBlogSchema),
     defaultValues: {
       title: "",
       content: "",
+      tag: undefined,
+      image: undefined,
+      imageCreditName: "",
+      imageCreditUrl: "",
     },
   });
 
-  // ✅ Fix 1: Added `values` parameter
+  const selectedTag = form.watch("tag");
+
   const onSubmit = async (values: z.infer<typeof createBlogSchema>) => {
     startTransition(async () => {
       try {
-        // await mutation({
-        //   title: values.title,
-        //   content: values.content,
-        //   // authorId: Id<users>,
-        // });
-
         await createPostAction(values);
-
-        await Axios.post("/api/create-blog", {
-          title: values.title,
-          content: values.content,
-        });
-
         toast.success("Blog created successfully");
         form.reset();
-        // router.push("/"); // Redirect to home page after creation
       } catch (err) {
         if (err instanceof Error) {
           toast.error(err?.message || "Failed to create blog");
@@ -74,89 +62,218 @@ const Create = () => {
   };
 
   return (
-    // ✅ Fix 2: Outer wrapper now has proper centering + padding
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      {/* ✅ Fix 3: Header centered properly */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-2xl">
-          Create New Item
-        </h1>
-        <p className="text-muted-foreground text-sm pt-2">Craft your Idea...</p>
+    <div className="min-h-screen bg-[#0a0a0b] text-[#e8e6e1] font-sans relative overflow-hidden">
+      {/* Background orbs */}
+      <div className="orb orb-violet -top-20 -right-40 opacity-20" />
+      <div className="orb orb-blue bottom-40 -left-60 opacity-15" />
+
+      {/* Dot grid */}
+      <div className="absolute inset-0 dot-grid opacity-30" />
+
+      <div className="relative z-10 max-w-3xl mx-auto px-6 pt-32 pb-20">
+        {/* Page header */}
+        <div className="mb-10">
+          <span className="inline-flex items-center gap-2 text-xs tracking-[0.3em] uppercase text-violet-400 mb-6 px-4 py-2 rounded-full border border-violet-500/20 bg-violet-500/5">
+            <Sparkles className="w-3.5 h-3.5" />
+            New post
+          </span>
+          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-3">
+            Create Article
+          </h1>
+          <p className="text-base text-white/40 leading-relaxed">
+            Craft your idea and share it with the world.
+          </p>
+        </div>
+
+        {/* Form card */}
+        <Card className="bg-white/[0.03] border-white/[0.08] backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <PenLine className="w-5 h-5 text-violet-400" />
+              New Blog Article
+            </CardTitle>
+            <CardDescription className="text-white/35">
+              Fill in the details below to publish your post.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form
+              className="space-y-6"
+              onSubmit={form.handleSubmit(onSubmit)}
+              noValidate
+            >
+              <FieldGroup>
+                {/* Title */}
+                <Controller
+                  name="title"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="title" className="text-white/60">
+                        Title
+                      </FieldLabel>
+                      <Input
+                        id="title"
+                        type="text"
+                        placeholder="Enter blog title"
+                        aria-invalid={fieldState.invalid}
+                        className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus-visible:border-violet-500/50"
+                        {...field}
+                      />
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
+
+                {/* Tag selector */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">
+                    Tag
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {POST_TAGS.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          form.setValue(
+                            "tag",
+                            selectedTag === tag ? undefined : tag
+                          );
+                        }}
+                        className={`text-xs px-3.5 py-1.5 rounded-full border transition-all cursor-pointer ${
+                          selectedTag === tag
+                            ? tagColors[tag] ??
+                              "border-white/20 bg-white/10 text-white"
+                            : "border-white/8 bg-white/[0.03] text-white/35 hover:bg-white/[0.06] hover:text-white/50"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <Controller
+                  name="content"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="content" className="text-white/60">
+                        Content
+                      </FieldLabel>
+                      <Textarea
+                        id="content"
+                        placeholder="Write your blog content..."
+                        aria-invalid={fieldState.invalid}
+                        className="min-h-36 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus-visible:border-violet-500/50 resize-y"
+                        {...field}
+                      />
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
+
+                {/* Image */}
+                <Controller
+                  name="image"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="image" className="text-white/60">
+                        Cover Image
+                      </FieldLabel>
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        aria-invalid={fieldState.invalid}
+                        className="min-h-12 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/60 outline-none transition-colors focus-visible:border-violet-500/50 file:text-violet-400 file:border-0 file:bg-transparent file:text-sm file:font-medium"
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          field.onChange(file ?? null);
+                        }}
+                      />
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Image Credit Name */}
+                  <Controller
+                    name="imageCreditName"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="imageCreditName" className="text-white/60">
+                          Image Credit Name
+                        </FieldLabel>
+                        <Input
+                          id="imageCreditName"
+                          type="text"
+                          placeholder="e.g. John Doe (Optional)"
+                          aria-invalid={fieldState.invalid}
+                          className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus-visible:border-violet-500/50"
+                          {...field}
+                        />
+                        <FieldError errors={[fieldState.error]} />
+                      </Field>
+                    )}
+                  />
+
+                  {/* Image Credit URL */}
+                  <Controller
+                    name="imageCreditUrl"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="imageCreditUrl" className="text-white/60">
+                          Image Credit URL
+                        </FieldLabel>
+                        <Input
+                          id="imageCreditUrl"
+                          type="text"
+                          placeholder="e.g. https://unsplash.com/... (Optional)"
+                          aria-invalid={fieldState.invalid}
+                          className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus-visible:border-violet-500/50"
+                          {...field}
+                        />
+                        <FieldError errors={[fieldState.error]} />
+                      </Field>
+                    )}
+                  />
+                </div>
+              </FieldGroup>
+
+              <button
+                type="submit"
+                className={buttonVariants({
+                  className:
+                    "mt-2 w-full bg-violet-600 hover:bg-violet-500 text-white border-0 h-11 text-sm font-medium",
+                })}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" />
+                    <span>Publishing...</span>
+                  </>
+                ) : (
+                  <span>Publish Article</span>
+                )}
+              </button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* ✅ Fix 4: Card takes full parent width — parent controls max width */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Create Blog Article</CardTitle>
-          <CardDescription>
-            Create a new blog article for your audience.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          {/* ✅ Fix 5: Removed redundant max-w and mt-8 from form */}
-          <form
-            className="space-y-6"
-            onSubmit={form.handleSubmit(onSubmit)}
-            noValidate
-          >
-            <FieldGroup>
-              <Controller
-                name="title"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="title">Title</FieldLabel>
-                    <Input
-                      id="title"
-                      type="text"
-                      placeholder="Enter blog title"
-                      aria-invalid={fieldState.invalid}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring"
-                      {...field}
-                    />
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="content"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="content">Content</FieldLabel>
-                    {/* ✅ Fix 6: h-10 → min-h-32 so textarea is actually usable */}
-                    <Textarea
-                      id="content"
-                      placeholder="Enter blog content"
-                      aria-invalid={fieldState.invalid}
-                      className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring resize-y"
-                      {...field}
-                    />
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            </FieldGroup>
-
-            <button
-              type="submit"
-              className={buttonVariants({ className: "mt-2 w-full" })}
-              disabled={isPending}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  <span>Loading...</span>
-                </>
-              ) : (
-                <span>Create Blog</span>
-              )}
-            </button>
-          </form>
-        </CardContent>
-      </Card>
+      <Footer />
     </div>
   );
 };

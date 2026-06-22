@@ -1,17 +1,14 @@
-import React from "react";
+import { Metadata } from "next";
 
-const BlogLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <>
-      <div className=" flex flex-col items-center justify-center py-8 px-4">
-        <div className="w-full max-w-7xl">
-          {" "}
-          {/* ← wrap children in a width container */}
-          {children}
-        </div>
-      </div>
-    </>
-  );
+export const metadata: Metadata = {
+  title: "Blog",
+  description: "Read all my latest posts, thoughts, and technical writing.",
 };
 
-export default BlogLayout;
+export default function BlogLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
+}

@@ -10,11 +10,11 @@ const AuthLayout = ({ children }: { children: ReactNode }): React.ReactNode => {
 
       <button className="absolute left-4 top-4 z-10 sm:left-6 sm:top-6">
         <Link
-          href="/auth/register"
+          href="/"
           className={buttonVariants({ variant: "outline", size: "lg" })}
         >
           <ArrowLeft className="mr-2 inline-block size-4" />
-          Back to SignIn
+          Back to Home
         </Link>
       </button>
 
