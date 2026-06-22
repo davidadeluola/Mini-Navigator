@@ -19,34 +19,21 @@ interface PostIdProps {
 import { Metadata } from "next";
 import { getToken } from "@/lib/auth-server";
 import { redirect } from "next/navigation";
-import { cacheLife, cacheTag, revalidateTag } from "next/cache";
+import { connection } from "next/server";
 
 /**
- * Fetches a post and caches the result in the Next.js data cache.
- *
- * Cache policy:
- *   stale      — serve stale while revalidating for up to 60 s
- *   revalidate — background-revalidate every 10 min (600 s)
- *   expire     — hard-expire after 1 hour (3600 s)
- *
- * On-demand invalidation (call from a Server Action after a post update):
- *   revalidateTag(`post-${postId}`)  ← clears one specific post
- *   revalidateTag("posts")           ← clears all posts at once
+ * Fetches a post directly from Convex.
+ * Caching has been removed to make this route fully dynamic.
  */
 async function fetchPost(postId: Id<"posts">) {
-  "use cache";
-  cacheLife({ stale: 60, revalidate: 600, expire: 3600 });
-  cacheTag("posts", `post-${postId}`);
   return fetchQuery(api.posts.getPostById, { postId });
 }
-
-// Re-export revalidateTag so Server Actions can import it from one place
-export { revalidateTag };
 
 export async function generateMetadata({
   params,
 }: PostIdProps): Promise<Metadata> {
   const { postId } = await params;
+  await connection(); // Make metadata resolution fully dynamic
 
   try {
     const postData = await fetchPost(postId);
@@ -68,6 +55,8 @@ export async function generateMetadata({
 
 const PostId = async ({ params }: PostIdProps) => {
   const { postId } = await params;
+  await connection(); // Ensure the page itself opts into dynamic rendering
+
   const token: string | undefined = await getToken();
 
   if (!token) {
@@ -75,8 +64,8 @@ const PostId = async ({ params }: PostIdProps) => {
   }
 
   const [postData, preloadedComments] = await Promise.all([
-    fetchPost(postId),                                              // ← cached 10 min
-    preloadQuery(api.comments.getCommentsByPostId, { postId }),     // ← real-time (Convex)
+    fetchPost(postId),                                              // ← fully dynamic (Convex)
+    preloadQuery(api.comments.getCommentsByPostId, { postId }),     // ← fully dynamic (Convex)
   ]);
 
   if (!postData) {
