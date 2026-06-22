@@ -4,7 +4,9 @@ import type { NextConfig } from "next";
 const allowedHostnames = [
   "images.unsplash.com",
   "tremendous-crane-40.convex.cloud",
-  "via.placeholder.com"
+  "via.placeholder.com",
+  "savory-seahorse-284.convex.cloud",
+  "savory-seahorse-284.convex.site"
   // add as many as you want...
 ];
 
