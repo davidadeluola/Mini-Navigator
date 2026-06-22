@@ -3,7 +3,7 @@
 
 import { createBlogSchema } from "@/schemas/blog";
 import { z } from "zod/v3";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { api } from "@/convex/_generated/api";
 import { redirect } from "next/navigation";
 import { fetchAuthMutation, getToken } from "@/lib/auth-server";
@@ -75,6 +75,9 @@ export async function createPostAction(
 
   // Bust the cache for the home page so the new post appears immediately
   revalidatePath("/");
-  // Navigate the user to the blog listing page after creation
+  // Navigate the user to the 
+  // 
+  // updablog listing page after creation
+  updateTag("blog");
   redirect("/blog");
 }

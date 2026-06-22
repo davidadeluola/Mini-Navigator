@@ -2,6 +2,8 @@
 import { mutation, query } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
 import { authComponent } from "./betterAuth/auth";
+import { Doc } from "./_generated/dataModel";
+
 
 export const createPost = mutation({
   args: {
@@ -38,12 +40,12 @@ export const getPosts = query({
   },
   handler: async (ctx, args) => {
     let query = ctx.db.query("posts");
-    
+
     // Filter by author if provided
     if (args.authorId) {
       query = query.filter((q) => q.eq(q.field("authorId"), args.authorId));
     }
-    
+
     const posts = await query.order("desc").collect();
 
     return Promise.all(
@@ -94,3 +96,54 @@ export const getPostById = query({
     };
   },
 });
+
+
+  export const searchPosts = query({
+    args: {
+      term: v.string(),
+      limit: v.number(),
+    },
+    handler: async (ctx, args) => {
+      const limit = args.limit || 10;
+
+      // ✅ Correct type — not Array<string>
+      const results: Array<{ _id: string; title: string; content: string }> = [];
+      const seenResults = new Set<string>();
+
+      const pushResults = async (docs: Array<Doc<"posts">>) => {
+        for (const doc of docs) {
+          if (!seenResults.has(doc._id.toString())) {
+            results.push({
+              _id: doc._id,
+              title: doc.title,
+              content: doc.content, // ✅ was doc.title (copy-paste bug)
+            });
+            seenResults.add(doc._id.toString());
+          }
+          if (results.length >= limit) break;
+        } // ✅ closing brace for the for-loop was missing
+      };
+
+      // ✅ withSearchIndex doesn't chain .take()/.order()/.limit() — collect() only
+      const titleResults = await ctx.db
+        .query("posts")
+        .withSearchIndex("search_title", (q) => q.search("title", args.term))
+        .take(limit);
+
+      await pushResults(titleResults);
+
+      if (results.length < limit) {
+        const contentResults = await ctx.db
+          .query("posts")
+          .withSearchIndex("search_content", (q) =>
+            q.search("content", args.term)
+          )
+          .take(limit);
+
+        await pushResults(contentResults);
+      }
+
+      return results; // ✅ was missing entirely
+    },
+  });
+

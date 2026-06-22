@@ -11,7 +11,15 @@ export default defineSchema({
     imageCreditName: v.optional(v.string()),
     imageCreditUrl: v.optional(v.string()),
     authorId: v.string(),
-  }),
+  })
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["tag", "authorId"], // ✅ filter by tag and authorId
+    })
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["tag", "authorId"], // ✅ filter by tag and authorId
+    }),
 
   comments: defineTable({
     postId: v.id("posts"),

@@ -19,17 +19,29 @@ interface PostIdProps {
 import { Metadata } from "next";
 import { getToken } from "@/lib/auth-server";
 import { redirect } from "next/navigation";
-import { unstable_cache } from "next/cache";
-import { cache } from "react";
+import { cacheLife, cacheTag, revalidateTag } from "next/cache";
 
-// Cached post fetch: stored for 10 min, revalidated on demand via tag "posts"
-const getCachedPost = cache((postId: Id<"posts">) =>
-  unstable_cache(
-    () => fetchQuery(api.posts.getPostById, { postId }),
-    ["post", postId],
-    { revalidate: 600, tags: ["posts", `post-${postId}`] }
-  )()
-);
+/**
+ * Fetches a post and caches the result in the Next.js data cache.
+ *
+ * Cache policy:
+ *   stale      — serve stale while revalidating for up to 60 s
+ *   revalidate — background-revalidate every 10 min (600 s)
+ *   expire     — hard-expire after 1 hour (3600 s)
+ *
+ * On-demand invalidation (call from a Server Action after a post update):
+ *   revalidateTag(`post-${postId}`)  ← clears one specific post
+ *   revalidateTag("posts")           ← clears all posts at once
+ */
+async function fetchPost(postId: Id<"posts">) {
+  "use cache";
+  cacheLife({ stale: 60, revalidate: 600, expire: 3600 });
+  cacheTag("posts", `post-${postId}`);
+  return fetchQuery(api.posts.getPostById, { postId });
+}
+
+// Re-export revalidateTag so Server Actions can import it from one place
+export { revalidateTag };
 
 export async function generateMetadata({
   params,
@@ -37,7 +49,7 @@ export async function generateMetadata({
   const { postId } = await params;
 
   try {
-    const postData = await getCachedPost(postId);
+    const postData = await fetchPost(postId);
     return {
       title: postData.title,
       description: postData.content.substring(0, 160) + "...",
@@ -63,13 +75,11 @@ const PostId = async ({ params }: PostIdProps) => {
   }
 
   const [postData, preloadedComments] = await Promise.all([
-    getCachedPost(postId),                                          // ← cached 10 min
+    fetchPost(postId),                                              // ← cached 10 min
     preloadQuery(api.comments.getCommentsByPostId, { postId }),     // ← real-time (Convex)
   ]);
 
-
   if (!postData) {
-    
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-32 text-center space-y-4">
         <p className="text-white/40 text-lg">Post not found.</p>

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import SearchInput from "@/components/web/SearchInput";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -56,7 +57,12 @@ const Navbar = () => {
             ))}
           </ul>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Desktop search */}
+            <div className="hidden md:flex w-56 lg:w-72">
+              <SearchInput className="w-full" />
+            </div>
+
             {/* Desktop auth buttons */}
             <div className="hidden md:flex items-center gap-3">
               {isLoading ? null : isAuthenticated ? (
@@ -150,8 +156,13 @@ const Navbar = () => {
           </button>
         </div>
 
+        {/* Mobile search - Above nav */}
+        <div className="px-4 pt-6 pb-2">
+          <SearchInput className="w-full" />
+        </div>
+
         {/* Nav links */}
-        <nav className="flex flex-col gap-1 px-4 py-6">
+        <nav className="flex flex-col gap-1 px-4 pt-2 pb-3">
           {visibleLinks.map((link) => (
             <Link
               key={link.label}

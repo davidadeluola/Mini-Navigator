@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const LoadingPostId = () => {
   return (
-    <article className="max-w-4xl w-full mx-auto px-4 sm:px-6 mt-10">
+    <article className="max-w-5xl w-full mx-auto px-4 sm:px-6 mt-10">
       {/* Back button */}
       <div className="mb-8">
         <Skeleton className="h-4 w-28" />
